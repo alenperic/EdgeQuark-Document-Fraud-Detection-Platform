@@ -1,0 +1,61 @@
+[Unit]
+Description=EdgeQuark Document Fraud Detection Platform
+Documentation=https://github.com/edgequark/document-fraud-detection
+After=network.target network-online.target
+Wants=network-online.target
+Requires=network.target
+
+[Service]
+Type=notify
+User=alen
+Group=alen
+WorkingDirectory=/home/alen/edgequark-platform
+Environment=PATH=/home/alen/edgequark-platform/edgequark-env/bin
+Environment=FLASK_ENV=production
+Environment=OLLAMA_BASE_URL=http://localhost:11434
+Environment=OLLAMA_MODEL=edgequark
+Environment=PORT=5000
+Environment=HOST=0.0.0.0
+ExecStart=/home/alen/edgequark-platform/edgequark-env/bin/gunicorn --config gunicorn.conf.py app:app
+ExecStartPre=/bin/mkdir -p /home/alen/edgequark-platform/logs
+ExecStartPre=/bin/mkdir -p /home/alen/edgequark-platform/uploads
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStartSec=60
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=10
+RestartPreventExitStatus=23
+
+# Security Settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/alen/edgequark-platform/logs
+ReadWritePaths=/home/alen/edgequark-platform/uploads
+PrivateTmp=true
+PrivateDevices=true
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+
+# Resource Limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=edgequark
+
+[Install]
+WantedBy=multi-user.target

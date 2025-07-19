@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - EdgeQuark{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Header Card -->
+        <div class="card fade-in mb-4">
+            <div class="card-header text-center">
+                <h2><i class="fas fa-search"></i> Document Analysis Results</h2>
+                <p class="mb-0">EdgeQuark AI Analysis for: <strong>{{ filename }}</strong></p>
+            </div>
+        </div>
+
+        {% if analysis.success %}
+            <!-- Analysis Results -->
+            <div class="row">
+                <!-- Summary Card -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="fas fa-chart-pie"></i> Analysis Summary</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="authenticity-score score-high mb-3" id="authenticityScore">
+                                85%
+                            </div>
+                            <h6>Authenticity Score</h6>
+                            
+                            <div class="mt-4">
+                                <span class="risk-badge risk-medium" id="riskBadge">
+                                    <i class="fas fa-exclamation-triangle"></i> MEDIUM RISK
+                                </span>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <small class="text-muted">
+                                    <i class="fas fa-robot"></i> Model: {{ analysis.model_used or 'EdgeQuark' }}
+                                    <br>
+                                    <i class="fas fa-clock"></i> {{ analysis.timestamp }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Analysis -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h5><i class="fas fa-microscope"></i> Detailed Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="analysis-result">
+                                {% if analysis.analysis %}
+                                    <div id="analysisContent">
+                                        <pre style="white-space: pre-wrap; font-family: 'Segoe UI', sans-serif;">{{ analysis.analysis }}</pre>
+                                    </div>
+                                {% else %}
+                                    <div class="text-center">
+                                        <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                                        <h5>No detailed analysis available</h5>
+                                        <p class="text-muted">The AI model completed the analysis but no detailed results were returned.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Findings Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Key Findings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="findingsSection">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-search-plus"></i> Detected Issues</h6>
+                            <ul id="detectedIssues">
+                                <li>Analysis completed successfully</li>
+                                <li>Document processed for fraud indicators</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-shield-alt"></i> Security Features</h6>
+                            <ul id="securityFeatures">
+                                <li>AI analysis performed</li>
+                                <li>Document structure examined</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-lightbulb"></i> Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recommendations">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Next Steps:</strong> Review the detailed analysis above for specific recommendations based on the findings.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Error Display -->
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5><i class="fas fa-exclamation-circle"></i> Analysis Failed</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-times-circle"></i> Error: {{ analysis.error }}</h6>
+                        {% if analysis.details %}
+                            <p class="mb-0"><strong>Details:</strong> {{ analysis.details }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>Troubleshooting:</h6>
+                        <ul>
+                            <li>Ensure the EdgeQuark AI service is running</li>
+                            <li>Check if the Ollama API is accessible</li>
+                            <li>Verify the document format is supported</li>
+                            <li>Try with a smaller file size</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-body text-center">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-upload"></i> Analyze Another Document
+                </a>
+                
+                {% if analysis.success %}
+                    <button class="btn btn-success btn-lg me-3" onclick="downloadReport()">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                    
+                    <button class="btn btn-info btn-lg" onclick="shareResults()">
+                        <i class="fas fa-share"></i> Share Results
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- File Information -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6><i class="fas fa-file"></i> File Information</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Filename:</strong> {{ filename }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Type:</strong> {{ file_type or 'Unknown' }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Analyzed:</strong> {{ analysis.timestamp or 'Just now' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse and enhance analysis results
+        const analysisContent = document.getElementById('analysisContent');
+        const authenticityScore = document.getElementById('authenticityScore');
+        const riskBadge = document.getElementById('riskBadge');
+        
+        {% if analysis.success and analysis.analysis %}
+            // Try to parse structured analysis from AI response
+            try {
+                const analysisText = `{{ analysis.analysis | replace('\n', '\\n') | replace('"', '\\"') }}`;
+                parseAnalysisResults(analysisText);
+            } catch (e) {
+                console.log('Could not parse structured analysis:', e);
+            }
+        {% endif %}
+        
+        function parseAnalysisResults(text) {
+            // Extract authenticity score
+            const scoreMatch = text.match(/authenticity.*?(\d+)/i);
+            if (scoreMatch) {
+                const score = parseInt(scoreMatch[1]);
+                updateAuthenticityScore(score);
+            }
+            
+            // Extract risk level
+            const riskMatch = text.match(/(LOW|MEDIUM|HIGH|CRITICAL)/i);
+            if (riskMatch) {
+                updateRiskLevel(riskMatch[1].toUpperCase());
+            }
+            
+            // Extract findings
+            extractFindings(text);
+            
+            // Extract recommendations
+            extractRecommendations(text);
+        }
+        
+        function updateAuthenticityScore(score) {
+            const scoreElement = document.getElementById('authenticityScore');
+            scoreElement.textContent = score + '%';
+            
+            // Update score color based on value
+            scoreElement.className = 'authenticity-score ';
+            if (score >= 80) {
+                scoreElement.className += 'score-high';
+            } else if (score >= 50) {
+                scoreElement.className += 'score-medium';
+            } else {
+                scoreElement.className += 'score-low';
+            }
+        }
+        
+        function updateRiskLevel(level) {
+            const riskElement = document.getElementById('riskBadge');
+            const icons = {
+                'LOW': 'fa-check-circle',
+                'MEDIUM': 'fa-exclamation-triangle',
+                'HIGH': 'fa-exclamation-circle',
+                'CRITICAL': 'fa-times-circle'
+            };
+            
+            riskElement.className = `risk-badge risk-${level.toLowerCase()}`;
+            riskElement.innerHTML = `<i class="fas ${icons[level]}"></i> ${level} RISK`;
+        }
+        
+        function extractFindings(text) {
+            const findingsSection = document.getElementById('findingsSection');
+            const detectedIssues = document.getElementById('detectedIssues');
+            const securityFeatures = document.getElementById('securityFeatures');
+            
+            // Look for specific findings in the text
+            const issues = [];
+            const features = [];
+            
+            if (text.toLowerCase().includes('alteration')) issues.push('Potential alterations detected');
+            if (text.toLowerCase().includes('inconsistent')) issues.push('Inconsistent elements found');
+            if (text.toLowerCase().includes('manipulation')) issues.push('Possible image manipulation');
+            if (text.toLowerCase().includes('font')) issues.push('Font irregularities detected');
+            
+            if (text.toLowerCase().includes('authentic')) features.push('Document appears authentic');
+            if (text.toLowerCase().includes('security')) features.push('Security features analyzed');
+            if (text.toLowerCase().includes('watermark')) features.push('Watermark examination performed');
+            
+            // Update findings if found
+            if (issues.length > 0) {
+                detectedIssues.innerHTML = issues.map(issue => `<li>${issue}</li>`).join('');
+            }
+            
+            if (features.length > 0) {
+                securityFeatures.innerHTML = features.map(feature => `<li>${feature}</li>`).join('');
+            }
+        }
+        
+        function extractRecommendations(text) {
+            const recommendationsDiv = document.getElementById('recommendations');
+            
+            // Look for recommendation patterns
+            const recommendations = [];
+            
+            if (text.toLowerCase().includes('verify')) {
+                recommendations.push('Manual verification recommended');
+            }
+            if (text.toLowerCase().includes('expert')) {
+                recommendations.push('Consider expert forensic analysis');
+            }
+            if (text.toLowerCase().includes('additional')) {
+                recommendations.push('Additional documentation may be required');
+            }
+            
+            if (recommendations.length > 0) {
+                const recHtml = recommendations.map(rec => 
+                    `<div class="alert alert-warning"><i class="fas fa-lightbulb"></i> ${rec}</div>`
+                ).join('');
+                recommendationsDiv.innerHTML = recHtml;
+            }
+        }
+    });
+    
+    function downloadReport() {
+        // Generate and download analysis report
+        const reportData = {
+            filename: '{{ filename }}',
+            timestamp: new Date().toISOString(),
+            analysis: {{ analysis | tojson }},
+            fileType: '{{ file_type }}'
+        };
+        
+        const blob = new Blob([JSON.stringify(reportData, null, 2)], {
+            type: 'application/json'
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `edgequark-analysis-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    function shareResults() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'EdgeQuark Document Analysis',
+                text: 'Document fraud analysis completed by EdgeQuark AI',
+                url: window.location.href
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Results URL copied to clipboard!');
+            });
+        }
+    }
+</script>
+{% endblock %}
